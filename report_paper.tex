@@ -1,0 +1,97 @@
+\documentclass[UTF8]{ctexart}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%== 引入宏 ==%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{cite}
+\usepackage{amsmath}	% 使用数学公式
+\usepackage{graphicx}	% 插入图片/PDF/EPS 等图像
+\usepackage{subfigure}	% 使用子图像或者子表格
+\usepackage{geometry}	% 设置页边距
+\usepackage{fancyhdr}	% 设置页眉页脚
+\usepackage{setspace}	% 设置行间距
+\usepackage{hyperref}	% 让生成的文章目录有链接，点击时会自动跳转到该章节
+\usepackage{url}
+\usepackage{caption2}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%== 设置全局环境 ==%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% [geometry] 设置页边距
+\geometry{top=2.6cm, bottom=2.6cm, left=2.45cm, right=2.45cm, headsep=0.4cm, foot=1.12cm}
+% 设置行间距为 1.5 倍行距
+\onehalfspacing
+% 设置页眉页脚
+\pagestyle{fancy}
+%\lhead{左头标}
+%\chead{\today}
+%\rhead{152xxxxxxxx}
+\lfoot{}
+\cfoot{\thepage}
+\rfoot{}
+%\renewcommand{\headrulewidth}{0.4pt}
+%\renewcommand{\headwidth}{\textwidth}
+%\renewcommand{\footrulewidth}{0pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%== 自定义命令  ==%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 此行使文献引用以上标形式显示
+\newcommand{\supercite}[1]{\textsuperscript{\cite{#1}}}
+% 此行使section中的图、表、公式编号以A-B的形式显示
+\renewcommand{\thetable}{\arabic{section}-\arabic{table}}
+\renewcommand{\thefigure}{\arabic{section}-\arabic{figure}}
+\renewcommand{\theequation}{\arabic{section}-\arabic{equation}}
+% 此行使图注、表注与编号之间的分隔符缺省，默认是冒号:
+\renewcommand{\captionlabeldelim}{~}
+
+%===================================== 标题设置  ==========================================
+% \heiti \kaishu 为字体设置，ctex 会自动根据操作系统加载字体
+\title{\huge{\heiti 基于MPI的相似轨迹计算}}
+\author{\small{\kaishu 吉吉}\\[2pt]
+\small{\kaishu 加里顿大学计算机科学与技术学院}\\[2pt]
+\small{Email:}
+\url{csyiji@gmail.com}
+}
+\date{} % 去除默认日期
+%\date{\today}
+
+%===================================== 正文区域  ==========================================
+\begin{document}
+\maketitle
+% \tableofcontents % 目录内容，注释取消掉可实现目录
+
+
+\section{重点难点分析}\label{sec2}
+\subsection{文件数据的解析}
+
+我们实验的数据由10000个轨迹数据文件和1个索引文件。其整个执行流程如下：
+
+\begin{itemize}
+	\item 假设目标轨迹为A,则先根据A的轨迹编号在索引文件中查询，得到行号x与列号y；
+	\item 轨迹A数据所在文件名为x\_data ,读取此文件第y行即为轨迹A的内容；
+	\item 轨迹的内容结构为:轨迹编号+轨迹数量+轨迹序列..,读取轨迹序列存入二维数组，再进行后续处理。
+\end{itemize}
+
+\subsection{LCSS算法阈值选择}
+
+由LCSS算法\ref{sec1:subsec3:eq2}的定义说明，其中计算的判断条件在于轨迹点距离$\epsilon$和轨迹点顺序差$\delta$两个阈值的选择。
+而此两个阈值不能仅仅设为常数，它们会随着目标轨迹的变化而变化。因此：
+
+\begin{itemize}
+	\item $\epsilon$：选取轨迹上每两个相邻点间的欧式距离和的$\frac{1}{k}$
+	\item $\delta$：选取轨迹上点数目的$\frac{1}{k}$
+\end{itemize}
+
+\subsection{相似度算法的非递归方式实现}
+\label{sec2:subsec3}
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=0.35\textwidth]{fig/fig01.pdf}\\
+  \caption{LCSS非递归实现}
+  \label{sec2:subsec3:fg1}
+\end{figure}
+
+LCSS公式\ref{sec1:subsec3:eq1} 给出的是求临近点的递归实现的方式，而我们的每条轨迹点约有60~100个点，则任意两条轨迹计算的递归深度至少为3600，占用的栈空间很大，
+因此我们采用非递归方式实现求临近点个数的算法。图\ref{sec2:subsec3:fg1}展示了非递归的实现方式：
+
+\begin{itemize}
+	\item 用矩阵来存储任意两点的计算结果,计算主要遵循两个原则：
+	\item 轨迹上两点若满足公式里的阈值范围，则将矩阵左上角数值加1;
+	\item 轨迹上两点若不满足阈值范围，则选择当前矩阵点的上方和左方的最大的数值作为当前值。
+\end{itemize}
+\end{document}
